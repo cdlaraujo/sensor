@@ -1,68 +1,434 @@
-<!-- Cole isso no CodePen (aba HTML) -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistema de Sensores</title>
+  <title>Sistema de Sensores Industriais</title>
   <style>
-    /* 🎨 ESTILOS COMPLETOS */
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+    
+    /* Reset e Variáveis CSS */
+    :root {
+      --primary-bg: #0a0a0a;
+      --secondary-bg: #1a1a1a;
+      --accent-bg: #2a2a2a;
+      --primary-text: #e0e0e0;
+      --secondary-text: #a0a0a0;
+      --accent-blue: #00d4ff;
+      --accent-green: #00ff88;
+      --accent-orange: #ff8800;
+      --accent-red: #ff4444;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --shadow-glow: 0 0 20px rgba(0, 212, 255, 0.3);
+      --shadow-glow-green: 0 0 20px rgba(0, 255, 136, 0.3);
+      --shadow-glow-orange: 0 0 20px rgba(255, 136, 0, 0.3);
+      --shadow-glow-red: 0 0 20px rgba(255, 68, 68, 0.3);
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    
     body {
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh; display: flex; align-items: center; justify-content: center; color: white;
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--primary-bg);
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(255, 136, 0, 0.1) 0%, transparent 50%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-text);
+      position: relative;
+      overflow: hidden;
     }
+
+    /* Efeito de Grid de Fundo */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        linear-gradient(rgba(0, 212, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.1) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+    }
+
     .container {
-      background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 20px;
-      padding: 2rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
-      min-width: 400px; text-align: center;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 2.5rem;
+      border: 1px solid var(--glass-border);
+      min-width: 500px;
+      max-width: 800px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, var(--accent-blue), var(--accent-green), var(--accent-orange));
+      border-radius: 20px;
+      z-index: -1;
+      opacity: 0.5;
+      filter: blur(10px);
+    }
+
     .sensor-display { display: none; }
     .sensor-display.active { display: block; }
-    .sensor-title { font-size: 2.5rem; margin-bottom: 1rem; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); }
-    .sensor-value { font-size: 4rem; font-weight: bold; margin: 2rem 0; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); }
-    .sensor-unit { font-size: 1.5rem; opacity: 0.8; }
-    .status-indicator { display: inline-block; width: 20px; height: 20px; border-radius: 50%; margin-left: 10px; animation: pulse 2s ease-in-out infinite alternate; }
-    .status-normal { background-color: #4ade80; }
-    .status-warning { background-color: #fbbf24; }
-    .status-critical { background-color: #f87171; }
-    @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
-    .navigation { margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; }
+
+    .sensor-title {
+      font-size: 2.8rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(45deg, var(--accent-blue), var(--accent-green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      position: relative;
+    }
+
+    .sensor-title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+      border-radius: 2px;
+    }
+
+    .sensor-value {
+      font-size: 4.5rem;
+      font-weight: 700;
+      margin: 2.5rem 0;
+      position: relative;
+      text-shadow: 0 0 20px currentColor;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .sensor-unit {
+      font-size: 1.8rem;
+      opacity: 0.7;
+      margin-left: 0.5rem;
+      font-weight: 300;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      margin-left: 15px;
+      position: relative;
+      animation: pulse 2s ease-in-out infinite alternate;
+    }
+
+    .status-indicator::after {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      border-radius: 50%;
+      background: inherit;
+      filter: blur(4px);
+      opacity: 0.5;
+      z-index: -1;
+    }
+
+    .status-normal { 
+      background-color: var(--accent-green);
+      box-shadow: var(--shadow-glow-green);
+    }
+    .status-warning { 
+      background-color: var(--accent-orange);
+      box-shadow: var(--shadow-glow-orange);
+    }
+    .status-critical { 
+      background-color: var(--accent-red);
+      box-shadow: var(--shadow-glow-red);
+    }
+
+    @keyframes pulse {
+      from { opacity: 0.7; transform: scale(1); }
+      to { opacity: 1; transform: scale(1.1); }
+    }
+
+    .navigation {
+      margin-top: 2.5rem;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
     .nav-btn {
-      background: rgba(255, 255, 255, 0.2); border: none; color: white; padding: 0.8rem 1.5rem;
-      border-radius: 10px; cursor: pointer; transition: all 0.3s ease;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--primary-text);
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      overflow: hidden;
     }
-    .nav-btn:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-2px); }
-    .debug-info { margin-top: 1rem; font-size: 0.8rem; opacity: 0.7; }
-    .power-controls { margin: 1rem 0; display: flex; align-items: center; justify-content: center; gap: 1rem; }
+
+    .nav-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.4), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .nav-btn:hover::before {
+      left: 100%;
+    }
+
+    .nav-btn:hover {
+      border-color: var(--accent-blue);
+      box-shadow: var(--shadow-glow);
+      transform: translateY(-2px);
+    }
+
+    .debug-info {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: var(--secondary-bg);
+      border-radius: 10px;
+      border: 1px solid var(--accent-bg);
+      font-size: 0.8rem;
+      color: var(--secondary-text);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .debug-info div {
+      margin: 0.3rem 0;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .power-controls {
+      margin: 2rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
     .power-button {
-      background: linear-gradient(45deg, #ff4757, #ff3742); border: none; color: white;
-      padding: 1rem 2rem; border-radius: 50px; cursor: pointer;
-      font-size: 1.1rem; font-weight: bold; transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+      background: linear-gradient(45deg, var(--accent-red), #cc0000);
+      border: none;
+      color: white;
+      padding: 1.2rem 2.5rem;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-glow-red);
     }
+
+    .power-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.3s ease;
+    }
+
+    .power-button:hover::before {
+      left: 100%;
+    }
+
     .power-button.on {
-      background: linear-gradient(45deg, #2ed573, #1dd1a1);
-      box-shadow: 0 4px 15px rgba(46, 213, 115, 0.4);
+      background: linear-gradient(45deg, var(--accent-green), #00cc44);
+      box-shadow: var(--shadow-glow-green);
     }
-    .power-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
-    .power-status { font-size: 1.2rem; font-weight: bold; display: flex; align-items: center; gap: 0.5rem; }
-    .system-off { opacity: 0.3; pointer-events: none; }
-    .system-off .sensor-value { color: #666; }
-    .temp-display { background: linear-gradient(45deg, #ff6b6b, #ffa500); }
-    .pressure-display { background: linear-gradient(45deg, #4ecdc4, #45b7d1); }
-    .flow-display { background: linear-gradient(45deg, #96ceb4, #85c1e9); }
-    .dashboard-display { background: linear-gradient(45deg, #667eea, #764ba2); }
+
+    .power-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.3),
+        var(--shadow-glow-green);
+    }
+
+    .power-status {
+      font-size: 1.2rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--secondary-text);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .system-off {
+      opacity: 0.3;
+      pointer-events: none;
+      filter: grayscale(1);
+    }
+
+    .system-off .sensor-value {
+      color: var(--secondary-text);
+      text-shadow: none;
+    }
+
+    /* Temas específicos por sensor */
+    .temp-display {
+      background: radial-gradient(circle at center, rgba(255, 136, 0, 0.1) 0%, transparent 70%);
+    }
+
+    .temp-display .sensor-value {
+      color: var(--accent-orange);
+    }
+
+    .pressure-display {
+      background: radial-gradient(circle at center, rgba(0, 212, 255, 0.1) 0%, transparent 70%);
+    }
+
+    .pressure-display .sensor-value {
+      color: var(--accent-blue);
+    }
+
+    .flow-display {
+      background: radial-gradient(circle at center, rgba(0, 255, 136, 0.1) 0%, transparent 70%);
+    }
+
+    .flow-display .sensor-value {
+      color: var(--accent-green);
+    }
+
+    .dashboard-display {
+      background: radial-gradient(circle at center, rgba(0, 212, 255, 0.05) 0%, transparent 70%);
+    }
+
     .dashboard-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
     }
+
     .mini-sensor {
-      background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: var(--glass-bg);
+      padding: 1.5rem;
+      border-radius: 15px;
+      border: 1px solid var(--glass-border);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
-    .mini-value { font-size: 2rem; font-weight: bold; }
-    .mini-status { margin-top: 0.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; }
+
+    .mini-sensor::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-green), var(--accent-orange));
+      border-radius: 15px 15px 0 0;
+    }
+
+    .mini-sensor:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-glow);
+      border-color: var(--accent-blue);
+    }
+
+    .mini-sensor h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: var(--secondary-text);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 500;
+    }
+
+    .mini-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--primary-text);
+    }
+
+    .mini-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: var(--secondary-text);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .mini-status span:first-child {
+      font-size: 1.2rem;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+      .container {
+        min-width: 350px;
+        padding: 1.5rem;
+      }
+      
+      .sensor-title {
+        font-size: 2.2rem;
+      }
+      
+      .sensor-value {
+        font-size: 3.5rem;
+      }
+      
+      .power-controls {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -126,9 +492,9 @@
       <button class="nav-btn" onclick="showView('dashboard')">Dashboard</button>
     </div>
     <div class="debug-info">
-      <div>View atual: <span id="current-view">dashboard</span></div>
-      <div>URL params: <span id="url-params">view=dashboard</span></div>
-      <div>Última atualização: <span id="last-update">--</span></div>
+      <div><span>View atual:</span><span id="current-view">dashboard</span></div>
+      <div><span>URL params:</span><span id="url-params">view=dashboard</span></div>
+      <div><span>Última atualização:</span><span id="last-update">--</span></div>
     </div>
   </div>
 
@@ -270,12 +636,12 @@
         const powerEl = document.getElementById(`dash-${sensor}-power`);
         if (statusEl) {
           statusEl.style.color = powered
-            ? (status === 'normal' ? '#4ade80' : status === 'warning' ? '#fbbf24' : '#f87171')
+            ? (status === 'normal' ? '#00ff88' : status === 'warning' ? '#ff8800' : '#ff4444')
             : '#666';
         }
         if (powerEl) {
           powerEl.textContent = powered ? 'ON' : 'OFF';
-          powerEl.style.color = powered ? '#4ade80' : '#f87171';
+          powerEl.style.color = powered ? '#00ff88' : '#ff4444';
         }
       });
     }
@@ -312,7 +678,6 @@
     }
   }
 
-  // Substitui popstate por hashchange
   window.addEventListener('hashchange', () => {
     const view = window.location.hash.replace('#', '') || 'dashboard';
     if (window.sensorSystem) {
