@@ -1,0 +1,324 @@
+<!-- Cole isso no CodePen (aba HTML) -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistema de Sensores</title>
+  <style>
+    /* 🎨 ESTILOS COMPLETOS */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; color: white;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 20px;
+      padding: 2rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+      min-width: 400px; text-align: center;
+    }
+    .sensor-display { display: none; }
+    .sensor-display.active { display: block; }
+    .sensor-title { font-size: 2.5rem; margin-bottom: 1rem; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); }
+    .sensor-value { font-size: 4rem; font-weight: bold; margin: 2rem 0; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); }
+    .sensor-unit { font-size: 1.5rem; opacity: 0.8; }
+    .status-indicator { display: inline-block; width: 20px; height: 20px; border-radius: 50%; margin-left: 10px; animation: pulse 2s ease-in-out infinite alternate; }
+    .status-normal { background-color: #4ade80; }
+    .status-warning { background-color: #fbbf24; }
+    .status-critical { background-color: #f87171; }
+    @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
+    .navigation { margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; }
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.2); border: none; color: white; padding: 0.8rem 1.5rem;
+      border-radius: 10px; cursor: pointer; transition: all 0.3s ease;
+    }
+    .nav-btn:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-2px); }
+    .debug-info { margin-top: 1rem; font-size: 0.8rem; opacity: 0.7; }
+    .power-controls { margin: 1rem 0; display: flex; align-items: center; justify-content: center; gap: 1rem; }
+    .power-button {
+      background: linear-gradient(45deg, #ff4757, #ff3742); border: none; color: white;
+      padding: 1rem 2rem; border-radius: 50px; cursor: pointer;
+      font-size: 1.1rem; font-weight: bold; transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+    }
+    .power-button.on {
+      background: linear-gradient(45deg, #2ed573, #1dd1a1);
+      box-shadow: 0 4px 15px rgba(46, 213, 115, 0.4);
+    }
+    .power-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
+    .power-status { font-size: 1.2rem; font-weight: bold; display: flex; align-items: center; gap: 0.5rem; }
+    .system-off { opacity: 0.3; pointer-events: none; }
+    .system-off .sensor-value { color: #666; }
+    .temp-display { background: linear-gradient(45deg, #ff6b6b, #ffa500); }
+    .pressure-display { background: linear-gradient(45deg, #4ecdc4, #45b7d1); }
+    .flow-display { background: linear-gradient(45deg, #96ceb4, #85c1e9); }
+    .dashboard-display { background: linear-gradient(45deg, #667eea, #764ba2); }
+    .dashboard-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;
+    }
+    .mini-sensor {
+      background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .mini-value { font-size: 2rem; font-weight: bold; }
+    .mini-status { margin-top: 0.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container dashboard-display">
+    <div id="temperatura" class="sensor-display temp-display">
+      <h1 class="sensor-title">🌡️ Temperatura</h1>
+      <div class="power-controls">
+        <div class="power-status">
+          <span id="temp-power-text">Sistema: </span>
+          <span id="temp-power-indicator" class="status-indicator status-normal"></span>
+        </div>
+        <button id="temp-power-btn" class="power-button on" onclick="togglePower('temperatura')">🔌 LIGADO</button>
+      </div>
+      <div class="sensor-value"><span id="temp-value">25</span><span class="sensor-unit">°C</span><span id="temp-status" class="status-indicator status-normal"></span></div>
+    </div>
+
+    <div id="pressao" class="sensor-display pressure-display">
+      <h1 class="sensor-title">📊 Pressão</h1>
+      <div class="power-controls">
+        <div class="power-status">
+          <span id="pressure-power-text">Sistema: </span>
+          <span id="pressure-power-indicator" class="status-indicator status-normal"></span>
+        </div>
+        <button id="pressure-power-btn" class="power-button on" onclick="togglePower('pressao')">🔌 LIGADO</button>
+      </div>
+      <div class="sensor-value"><span id="pressure-value">1.2</span><span class="sensor-unit">bar</span><span id="pressure-status" class="status-indicator status-normal"></span></div>
+    </div>
+
+    <div id="vazao" class="sensor-display flow-display">
+      <h1 class="sensor-title">💧 Vazão</h1>
+      <div class="power-controls">
+        <div class="power-status">
+          <span id="flow-power-text">Sistema: </span>
+          <span id="flow-power-indicator" class="status-indicator status-normal"></span>
+        </div>
+        <button id="flow-power-btn" class="power-button on" onclick="togglePower('vazao')">🔌 LIGADO</button>
+      </div>
+      <div class="sensor-value"><span id="flow-value">75</span><span class="sensor-unit">L/min</span><span id="flow-status" class="status-indicator status-normal"></span></div>
+    </div>
+
+    <div id="dashboard" class="sensor-display dashboard-display active">
+      <h1 class="sensor-title">🏭 Painel Central</h1>
+      <div class="power-controls">
+        <div class="power-status">
+          <span>Sistema Geral: </span>
+          <span id="main-power-indicator" class="status-indicator status-normal"></span>
+        </div>
+        <button id="main-power-btn" class="power-button on" onclick="togglePower('sistema')">🔌 LIGADO</button>
+      </div>
+      <div class="dashboard-grid">
+        <div class="mini-sensor"><h3>Temperatura</h3><div class="mini-value"><span id="dash-temp">25</span>°C</div><div class="mini-status"><span id="dash-temp-status">●</span><span id="dash-temp-power">ON</span></div></div>
+        <div class="mini-sensor"><h3>Pressão</h3><div class="mini-value"><span id="dash-pressure">1.2</span>bar</div><div class="mini-status"><span id="dash-pressure-status">●</span><span id="dash-pressure-power">ON</span></div></div>
+        <div class="mini-sensor"><h3>Vazão</h3><div class="mini-value"><span id="dash-flow">75</span>L/min</div><div class="mini-status"><span id="dash-flow-status">●</span><span id="dash-flow-power">ON</span></div></div>
+      </div>
+    </div>
+
+    <div class="navigation">
+      <button class="nav-btn" onclick="showView('temperatura')">Temp</button>
+      <button class="nav-btn" onclick="showView('pressao')">Pressão</button>
+      <button class="nav-btn" onclick="showView('vazao')">Vazão</button>
+      <button class="nav-btn" onclick="showView('dashboard')">Dashboard</button>
+    </div>
+    <div class="debug-info">
+      <div>View atual: <span id="current-view">dashboard</span></div>
+      <div>URL params: <span id="url-params">view=dashboard</span></div>
+      <div>Última atualização: <span id="last-update">--</span></div>
+    </div>
+  </div>
+
+  <script>
+  class SensorSystem {
+    constructor() {
+      this.data = {
+        temperatura: { value: 25, min: 20, max: 80, unit: '°C', powered: true },
+        pressao: { value: 1.2, min: 0.5, max: 3.0, unit: 'bar', powered: true },
+        vazao: { value: 75, min: 0, max: 150, unit: 'L/min', powered: true }
+      };
+      this.systemPowered = true;
+      this.init();
+      this.startSimulation();
+    }
+
+    init() {
+      const hash = window.location.hash.replace('#', '') || 'dashboard';
+      this.showView(hash, false);
+      this.updateDebugInfo(hash, `#${hash}`);
+    }
+
+    togglePower(sensorType) {
+      if (sensorType === 'sistema') {
+        this.systemPowered = !this.systemPowered;
+        Object.keys(this.data).forEach(key => {
+          this.data[key].powered = this.systemPowered;
+        });
+        this.updateAllPowerButtons();
+      } else {
+        this.data[sensorType].powered = !this.data[sensorType].powered;
+        this.updatePowerButton(sensorType);
+      }
+      this.updateDisplay();
+    }
+
+    updatePowerButton(sensorType) {
+      const powered = this.data[sensorType].powered;
+      const button = document.getElementById(`${this.getSensorPrefix(sensorType)}-power-btn`);
+      const indicator = document.getElementById(`${this.getSensorPrefix(sensorType)}-power-indicator`);
+      if (button) {
+        button.textContent = powered ? '🔌 LIGADO' : '⚡ DESLIGADO';
+        button.className = powered ? 'power-button on' : 'power-button';
+      }
+      if (indicator) {
+        indicator.className = powered ? 'status-indicator status-normal' : 'status-indicator status-critical';
+      }
+      const sensorDiv = document.getElementById(sensorType);
+      if (sensorDiv) {
+        sensorDiv.classList.toggle('system-off', !powered);
+      }
+    }
+
+    updateAllPowerButtons() {
+      const mainButton = document.getElementById('main-power-btn');
+      const mainIndicator = document.getElementById('main-power-indicator');
+      if (mainButton) {
+        mainButton.textContent = this.systemPowered ? '🔌 LIGADO' : '⚡ DESLIGADO';
+        mainButton.className = this.systemPowered ? 'power-button on' : 'power-button';
+      }
+      if (mainIndicator) {
+        mainIndicator.className = this.systemPowered ? 'status-indicator status-normal' : 'status-indicator status-critical';
+      }
+      Object.keys(this.data).forEach(sensorType => {
+        this.updatePowerButton(sensorType);
+      });
+    }
+
+    getSensorPrefix(sensorType) {
+      return {
+        'temperatura': 'temp',
+        'pressao': 'pressure',
+        'vazao': 'flow'
+      }[sensorType] || sensorType;
+    }
+
+    showView(viewName, updateHash = true) {
+      document.querySelectorAll('.sensor-display').forEach(el => el.classList.remove('active'));
+      const targetView = document.getElementById(viewName);
+      if (targetView) {
+        targetView.classList.add('active');
+        const container = document.querySelector('.container');
+        container.className = 'container';
+        container.classList.add(`${viewName}-display`);
+      }
+      if (updateHash) {
+        window.location.hash = viewName;
+      }
+      this.updateDebugInfo(viewName, `#${viewName}`);
+    }
+
+    startSimulation() {
+      setInterval(() => {
+        this.updateSensorData();
+        this.updateDisplay();
+      }, 2000);
+      this.updateDisplay();
+    }
+
+    updateSensorData() {
+      Object.keys(this.data).forEach(sensorType => {
+        if (this.data[sensorType].powered && this.systemPowered) {
+          this.data[sensorType].value = Number((Math.random() * 10 + this.data[sensorType].min).toFixed(1));
+        } else {
+          this.data[sensorType].value = 0;
+        }
+      });
+    }
+
+    getStatus(sensorType, value) {
+      const sensor = this.data[sensorType];
+      if (!sensor.powered || !this.systemPowered) return 'critical';
+      const percentage = (value - sensor.min) / (sensor.max - sensor.min);
+      if (percentage < 0.3) return 'critical';
+      if (percentage > 0.8) return 'warning';
+      return 'normal';
+    }
+
+    updateDisplay() {
+      document.getElementById('temp-value').textContent = this.data.temperatura.value;
+      document.getElementById('pressure-value').textContent = this.data.pressao.value;
+      document.getElementById('flow-value').textContent = this.data.vazao.value;
+      document.getElementById('dash-temp').textContent = this.data.temperatura.value;
+      document.getElementById('dash-pressure').textContent = this.data.pressao.value;
+      document.getElementById('dash-flow').textContent = this.data.vazao.value;
+      this.updateStatusIndicators();
+      this.updateDashboardStatus();
+      document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+    }
+
+    updateDashboardStatus() {
+      const sensors = ['temp', 'pressure', 'flow'];
+      const sensorTypes = ['temperatura', 'pressao', 'vazao'];
+      sensors.forEach((sensor, index) => {
+        const type = sensorTypes[index];
+        const powered = this.data[type].powered && this.systemPowered;
+        const status = this.getStatus(type, this.data[type].value);
+        const statusEl = document.getElementById(`dash-${sensor}-status`);
+        const powerEl = document.getElementById(`dash-${sensor}-power`);
+        if (statusEl) {
+          statusEl.style.color = powered
+            ? (status === 'normal' ? '#4ade80' : status === 'warning' ? '#fbbf24' : '#f87171')
+            : '#666';
+        }
+        if (powerEl) {
+          powerEl.textContent = powered ? 'ON' : 'OFF';
+          powerEl.style.color = powered ? '#4ade80' : '#f87171';
+        }
+      });
+    }
+
+    updateStatusIndicators() {
+      ['temperatura', 'pressao', 'vazao'].forEach(sensorType => {
+        const status = this.getStatus(sensorType, this.data[sensorType].value);
+        const indicator = document.getElementById(`${this.getSensorPrefix(sensorType)}-status`);
+        if (indicator) {
+          indicator.className = `status-indicator status-${status}`;
+        }
+      });
+    }
+
+    updateDebugInfo(view, hash) {
+      document.getElementById('current-view').textContent = view;
+      document.getElementById('url-params').textContent = hash || 'nenhum';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    window.sensorSystem = new SensorSystem();
+  });
+
+  function showView(viewName) {
+    if (window.sensorSystem) {
+      window.sensorSystem.showView(viewName);
+    }
+  }
+
+  function togglePower(sensorType) {
+    if (window.sensorSystem) {
+      window.sensorSystem.togglePower(sensorType);
+    }
+  }
+
+  // Substitui popstate por hashchange
+  window.addEventListener('hashchange', () => {
+    const view = window.location.hash.replace('#', '') || 'dashboard';
+    if (window.sensorSystem) {
+      window.sensorSystem.showView(view, false);
+    }
+  });
+</script>
+</body>
+</html>
